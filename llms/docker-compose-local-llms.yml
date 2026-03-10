@@ -1,4 +1,17 @@
+name: biomed-research-suite
+
 services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng_secure
+    ports:
+      - "8080:8080"
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+    volumes:
+      - ./searxng:/etc/searxng
+    restart: unless-stopped
+
   ollama:
     image: ollama/ollama:latest
     container_name: ollama_local
@@ -22,16 +35,40 @@ services:
       - "3000:8080"
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
-      - WEBUI_AUTH=false
-      # Enable web search:
-      - ENABLE_WEB_SEARCH=true       
-      - ENABLE_TOOLS=false           
-      - ENABLE_RAG=false
+      - WEBUI_AUTH=true
+      - ENABLE_WEB_SEARCH=true
+      - RAG_WEB_SEARCH_ENGINE=searxng
+      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
+      - WEBUI_SECRET_KEY_FILE=/run/secrets/webui_key   
+      - ENABLE_RAG=true
       - MAX_WEB_SEARCH_RESULTS=15
       - WEB_SEARCH_TIMEOUT=10
-      - SYSTEM_MESSAGE= "Respond as a biomedical research specialist. Ajoutez toujours:\ [VERIFY ON PUBMED oor GOOGLE SCHOLAR] to support claims."
     volumes:
       - openwebui_data:/app/backend/data
+      - ./data:/data/biomed:rw
+    secrets: 
+      - webui_key
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n_biomed
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BLOCK_XML_EXTERNAL_ENTITIES=true
+      - N8N_ENCRYPTION_KEY_FILE=/run/secrets/n8n_key
+      - OLLAMA_URL=http://ollama:11434
+    restart: unless-stopped
+    secrets:
+      - n8n_key
+    volumes:
+      - n8n_system_data:/home/node/.n8n
+      - ./data:/data/biomed:rw
+      - ./workflows:/data/workflows:rw
     depends_on:
       ollama:
         condition: service_healthy
@@ -39,3 +76,10 @@ services:
 volumes:
   ollama_data:
   openwebui_data:
+  n8n_system_data:
+
+secrets:
+  webui_key:
+    file: ./llms.env
+  n8n_key:
+    file: ./llms.env

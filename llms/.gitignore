@@ -1,0 +1,21 @@
+[CONFIG] Creating .gitignore...
+# CRITICAL: Private Security Keys
+llm.env
+llms.env
+*.env
+*.en
+n8n_private.key
+
+# Local Research Data (Private
+data/
+searxng/
+
+# Docker Persistence
+*_data/
+
+# PUBLIC: Visible to GitHub
+workflows/
+workflows/*.json
+docker-compose-local-llms.yml
+setup.bat
+README.md

@@ -35,8 +35,6 @@ data/: Primary directory for input and output data (CSVs, PDFs, datasets). This 
 
 workflows/: Directory for n8n workflow exports in JSON format. This folder is tracked by Git for team collaboration.
 
-searxng/: Contains local configuration files for the metasearch engine.
-
 Operations and Collaboration
 Academic Web Search
 The chat interface is configured to prioritize PubMed and Google Scholar for fact-grounding. Ensure the Web Search toggle is active in the Open WebUI settings to allow the model to cite academic sources.
@@ -55,22 +53,13 @@ Sharing Workflows: Export your n8n workflow as a JSON file into the workflows/ d
 
 Advanced Configuration
 Swapping Models
-The suite is configured by default with llama3.2 and biomistral. To add additional models:
-
-Open a terminal.
-
-Execute: docker exec -it ollama_local ollama pull [model_name]
+The suite is configured by default with llama3.2 and biomistral. To add additional models, pull them from OpenWebUI.
 
 The new model will immediately appear in the Open WebUI dropdown menu.
 
 Modifying Search Engines
 To change which academic or general engines SearXNG queries:
-
-Open searxng/settings.yml.
-
-Locate the engines section.
-
-Enable or disable specific providers (e.g., bing, arxiv, pubmed).
-
-Restart the container: docker compose restart searxng.
+ -  the engines section.
+ - Enable or disable specific providers (e.g., bing, arxiv, pubmed).
+ - Restart the container: docker compose restart searxng.
 

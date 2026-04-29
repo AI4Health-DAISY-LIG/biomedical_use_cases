@@ -8,6 +8,7 @@ services:
       - "8080:8080"
     environment:
       - SEARXNG_BASE_URL=http://localhost:8080/
+      - SEARXNG_SECRET= ${SEARXNG_SECRET}
     volumes:
       - ./searxng:/etc/searxng
     restart: unless-stopped
@@ -32,41 +33,41 @@ services:
     container_name: openwebui_local
     restart: unless-stopped
     ports:
-      - "3000:8080"
+      - "3001:3000"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_BASE_URL=http://ollama_local:11434
       - WEBUI_AUTH=true
       - ENABLE_WEB_SEARCH=true
-      - RAG_WEB_SEARCH_ENGINE=searxng
-      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
-      - WEBUI_SECRET_KEY_FILE=/run/secrets/webui_key   
+      - RAG_WEB_SEARCH_ENGINE=searxng_secure
+      - SEARXNG_QUERY_URL=http://searxng_secure:8080/
       - ENABLE_RAG=true
       - MAX_WEB_SEARCH_RESULTS=15
       - WEB_SEARCH_TIMEOUT=10
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET}
     volumes:
       - openwebui_data:/app/backend/data
       - ./data:/data/biomed:rw
-    secrets: 
-      - webui_key
     depends_on:
+      searxng:
+        condition: service_started
       ollama:
         condition: service_healthy
 
   n8n:
     image: n8nio/n8n:latest
     container_name: n8n_biomed
+    restart: unless-stopped
     ports:
       - "5678:5678"
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BLOCK_XML_EXTERNAL_ENTITIES=true
-      - N8N_ENCRYPTION_KEY_FILE=/run/secrets/n8n_key
-      - OLLAMA_URL=http://ollama:11434
-    restart: unless-stopped
+      - OLLAMA_URL=http://ollama_local:11434
+      - N8N_SECRET_KEY = ${N8N_SECRET}
     secrets:
       - n8n_key
     volumes:
-      - n8n_system_data:/home/node/.n8n
+      - ./data:/home/node/.n8n
       - ./data:/data/biomed:rw
       - ./workflows:/data/workflows:rw
     depends_on:
@@ -77,9 +78,3 @@ volumes:
   ollama_data:
   openwebui_data:
   n8n_system_data:
-
-secrets:
-  webui_key:
-    file: ./llms.env
-  n8n_key:
-    file: ./llms.env

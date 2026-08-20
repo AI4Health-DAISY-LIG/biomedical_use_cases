@@ -1,68 +1,53 @@
-#!/bin/bash
 
-# Configuration des chemins et noms
-NETWORK_NAME="biomed_network"
-AGENT_IMAGE="bibliography-searcher"
-BACKEND_DIR="llms"
-AGENT_DIR="agentic/agent_sandbox"
-WORKSPACE_DIR="agentic/workspace"
+---
 
-# Récupérer le répertoire racine du projet
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+## 🛠️ Ce que fait le script de lancement
 
-echo "[INFO] Verification de l'environnement..."
+Le script est intelligent. Il suit cette logique :
 
-MODE="RUN"
+1.  **Mode Installation (Si c'est la première fois) :**
+    *   Crée un réseau Docker isolé nommé `biomed_network`.
+    
+    *   Déploie l'infrastructure backend via Docker Compose (`Ollama`, `SearXNG`, `OpenWebUI`, `n8n`).
+    
+    *   Télécharge automatiquement le modèle **Llama3** dans Ollama.
+    
+    *   Configure le dossier `agentic/workspace` pour l'isolation des données.
+    
+    *   Construit l'image Docker de l'agent **Bibliography Searcher**.
 
-# 1. Détection du mode (Setup ou Run)
-if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || \
-   ! docker image inspect "$AGENT_IMAGE" >/dev/null 2>&1; then
-    MODE="SETUP"
-fi
+2.  **Mode Exécution (Si tout est déjà prêt) :**
+    *   Vérifie la disponibilité des services.
+    
+    *   Lance instantanément le conteneun de l'agent dans son environnement sécurisé (Sandbox).
 
-if [ "$MODE" == "SETUP" ]; then
-    echo "[INFO] Mode Installation detecte. Debut du setup..."
+---
 
-    # A. Création du réseau Docker
-    docker network create "$NETWORK_NAME"
+## 🏗️ Architecture & Sécurité
 
-    # B. Lancement de l'infrastructure Backend
-    echo "[INFO] Lancement des services backend..."
-    cd "$BACKEND_DIR"
-    docker compose -f docker-compose-local-llms.yml up -d
-    cd "$SCRIPT_DIR"
+### 🛡️ Le Sandbox Agentique
+L'agent **Bibliography Searcher** fonctionne dans un conteneur Docker ultra-restreint :
+*   **Isolation Système :** L'agent ne peut voir et modifier **que** le dossier `agentic/workspace`. Il n'a aucun accès à votre système hôte.
+*   **Utilisateur Non-Root :** Le processus tourne avec des privilèges limités pour empêcher toute escalade de droits.
+*   **Réseau Restreint :** L'agent ne peut communiquer qu'avec les services du réseau `biomed_network` (Ollama et SearXNG).
 
-    # C. Attente que Ollama soit prêt
-    echo "[INFO] Attente de la stabilisation d'Ollama (30s)..."
-    sleep 30
+### 🔍 Recherche Anonymisée
+L'utilisation de **SearXNG** comme proxy de recherche garantit que vos requêtes scientifiques ne sont pas tracées par Google ou d'autres moteurs. L'agent effectue ses recherches via ce moteur, protégeant ainsi l'identité de vos investigations.
 
-    # D. Téléchargement du modèle Llama3
-    echo "[INFO] Telechargement du modele llama3 dans Ollama..."
-    docker exec ollama_local ollama pull llama3
+### 🧩 Composants du Système
+| Service | Port | Rôle |
+| :--- | :--- | :--- |
+| **OpenWebUI** | `3001` | Interface utilisateur pour discuter avec les LLM et utiliser le RAG. |
+| **n8n** | `5678` | Orchestration de workflows automatisés. |
+| **SearXNG** | `8080` | Moteur de recherche privé et anonyme. |
+| **Ollama** | `11434` | Serveur d'inférence pour les modèles Llama3. |
 
-    # E. Création du dossier Workspace
-    if [ ! -d "$WORKSPACE_DIR" ]; then
-        echo "[INFO] Creation du dossier workspace..."
-        mkdir -p "$WORKSPACE_DIR"
-    fi
+---
 
-    # F. Construction de l'image de l'agent
-    echo "[INFO] Construction de l'image de l'agent..."
-    cd "$AGENT_DIR"
-    docker build -t "$AGENT_IMAGE" .
-    cd "$SCRIPT_DIR"
+## 📂 Structure du Projet
+*   `agentic/` : Contient l'agent intelligent, son Dockerfile et son environnement de travail (workspace).
+*   `llms/` : Contient la configuration des services d'inférence et de recherche.
+*   `start_biomed.bat / .sh` : Les scripts d'automatisation.
 
-    echo "[SUCCESS] Installation terminee avec succes !"
-fi
-
-# 2. Lancement de l'agent
-echo "[INFO] Lancement de l'agent Bibliography Searcher..."
-cd "$AGENT_DIR"
-docker run --rm \
-  --name agent_instance \
-  --network "$NETWORK_NAME" \
-  -v "$(pwd)/../workspace:/app/workspace" \
-  "$AGENT_IMAGE"
-
-echo "[INFO] Fin du processus."
+## ⚠️ Note importante
+Assurez-vous que Docker est bien lancé avant d'exécuter les scripts de lancement.

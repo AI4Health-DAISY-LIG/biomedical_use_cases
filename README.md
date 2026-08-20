@@ -12,7 +12,8 @@ Le projet est conçu pour être lancé avec un seul clic ou une seule commande. 
 
 ### Sur Windows <0xF0><0x9F><0xAA><0x9F>
 Double-cliquez simplement sur le fichier :
-`start_bi_med.bat`
+`start_biomed.bat`
 
 ### Sur Linux / macOS 🍎🐧
 Ouvrez un terminal à la racine du projet et lancez :
+`start_biomed.sh`

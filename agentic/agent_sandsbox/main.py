@@ -5,7 +5,7 @@ import re
 from openai import OpenAI
 
 # Configuration des endpoints
-OLLlama_URL = "http://ollama_local:11434/v1"
+OLLAMA_URL = "http://ollama_local:11434/v1"
 SEARXNG_URL = "http://searxng_secure:8080/search"
 WORKSPACE_DIR = "/app/workspace"
 
@@ -67,7 +67,7 @@ class BibliographySearcher:
     def tool_search_web(self, query):
         # Validation de la requête (Whitelist)
         if not self.validate_whitelist(query):
-            return "ERREUR : Caractères non autorisés dans la recherche."
+            return "ERREUR : Caractérès non autorisés dans la recherche."
             
         print(f"  [Agent] Recherche en cours : {query}")
         try:
@@ -92,7 +92,7 @@ class BibliographySearcher:
             return f"Erreur de lecture : {str(e)}"
 
     def tool_write_file(self, filename, content):
-        # Validation du nom de  fichier
+        # Validation du nom de fichier
         if not self.validate_whitelist(filename, r"^[a-zA-Z0-9\._\-]+$"):
             return "ERREUR : Nom de fichier invalide."
 
@@ -141,7 +141,7 @@ class BibliographySearcher:
                     query = params.get("query", "")
                     observation = self.tool_search_web(query)
                 elif action == "read_file":
-                    filename = params.get("filename", "")
+                    filename = params.  get("filename", "")
                     observation = self.tool_read_file(filename)
                 elif action == "write_file":
                     filename = params.get("filename", "")
@@ -156,7 +156,7 @@ class BibliographySearcher:
             except json.JSONDecodeError:
                 error_msg = "L'agent n'a pas renvoyé un JSON valide."
                 print(f"[Erreur] : {error_msg}")
-                self.history.append({"format": "user", "content": f"OBSERVATION: {error_msg}"})
+                self.history.append({"role": "user", "content": f"OBSERVATION: {error_msg}"})
                 break
             except Exception as e:
                 error_msg = f"Erreur d'exécution : {str(e)}"

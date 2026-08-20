@@ -10,7 +10,7 @@ WORKSPACE_DIR = "/app/workspace"
 
 # Initialisation du client OpenAI (compatible avec Ollama)
 client = OpenAI(
-    base_url=OLLAMA_impl_url := OLLAMA_URL,
+    base_url=OLLAMA_URL,
     api_key="ollama", # Clé factice car non requise par Ollama
 )
 
@@ -34,7 +34,7 @@ class BibliographySearcher:
         print(f"  [Agent] Recherche en cours : {query}")
         try:
             params = {'q': query, 'format': 'json'}
-            response = requests                requests.get(SEARXNG_URL, params=params, timeout=10)
+            response = requests.get(SEARXNG_URL, params=params, timeout=10)
             results = response.json().get('results', [])
             # On limite le retour pour ne pas saturer le contexte du LLM
             summary = "\n".join([f"- {r['title']}: {r['content'][:200]}..." for r in results[:5]])
@@ -68,11 +68,9 @@ class BibliographySearcher:
         
         # Boucle de raisonnement (limité à 5 itérations pour éviter les boucles infinies)
         for _ in range(5):
-            response = client.chat.com                requests.post(
-                client.chat.completions.create(
-                    model="llama3", # Assurez-vous que ce modèle est présent dans Ollama
-                    messages=self.history
-                )
+            response = client.chat.completions.create(
+                model="llama3", # Assurez-vous que ce modèle est présent dans Ollama
+                messages=self.history
             )
             
             content = response.choices[0].message.content

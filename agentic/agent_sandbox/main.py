@@ -67,9 +67,9 @@ class BibliographySearcher:
     def tool_search_web(self, query):
         # Validation de la requête (Whitelist)
         if not self.validate_whitelist(query):
-            return "ERREUR : Caractères non autorisés dans la recherche."
+            return "ERREUR : Caractérès non autorisés dans la recherche."
             
-        print(  f"  [Agent] Recherche en cours : {query}")
+        print(f"  [Agent] Recherche en cours : {query}")
         try:
             params = {'q': query, 'format': 'json'}
             response = requests.get(SEARXNG_URL, params=params, timeout=10)
@@ -100,7 +100,7 @@ class BibliographySearcher:
         try:
             with open(path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            return f"Fichier {filename} écrit avec succès."
+            return f"Fichier {filename} écrit avec un succès."
         except Exception as e:
             return f"Erreur d'écriture : {str(e)}"
 
@@ -118,11 +118,10 @@ class BibliographySearcher:
                 response = client.chat.completions.create(
                     model="llama3",
                     messages=self.history,
-                    response_format={"type": "json_object"} # Force le format JSON si supporté
+                    response_format={"type": "json_object"} 
                 )
                 
                 raw_content = response.choices[0].message.content
-                # Phase 1: Parsing du JSON structuré
                 data = json.loads(raw_content)
                 
                 thought = data.get("thought", "No thought provided.")
@@ -137,20 +136,17 @@ class BibliographySearcher:
                     break
 
                 observation = ""
-                # Exécution des outils avec validation
+                # Dispatching propre et unique des actions
                 if action == "search_web":
                     query = params.get("query", "")
                     observation = self.tool_search_web(query)
-                elif action as action_name: # Note: Correction de la logique de dispatch
-                    pass # (voir structure ci-dessous pour plus de clarté)
-
-                # Dispatching propre des actions
-                if action == "search_web":
-                    observation = self.tool_search_web(params.get("query", ""))
                 elif action == "read_file":
-                    observation = self.tool_read_file(params.get("filename", ""))
+                    filename = params.  get("filename", "")
+                    observation = self.tool_read_file(filename)
                 elif action == "write_file":
-                    observation = self.tool_write_file(params.get("filename", ""), params.get("content", ""))
+                    filename = params.get("filename", "")
+                    content = params.get("content", "")
+                    observation = self.tool_write_file(filename, content)
                 else:
                     observation = f"ERREUR : Action '{action}' non autorisée."
 

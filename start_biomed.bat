@@ -46,7 +46,7 @@ timeout /t 30 /nobreak >nul
 
 :: D. Telechargement du modele Llama3
 echo [INFO] Telechargement du modele llama3 dans Ollama...
-docker exec ollama_local ollama pull llama3
+docker exec ollama_local ollama pull gemma4:12b-it-qat llama-guard3:8b
 
 :: E. Creation du dossier Workspace s'il n'existe pas
 if not exist %WORKSPACE_DIR% (

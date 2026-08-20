@@ -4,20 +4,21 @@ import requests
 from openai import OpenAI
 
 # Configuration des endpoints (correspondant à votre docker-compose)
-OLLAMA_URL = "http://ollama_local:11434/"
+# Suppression du slash final pour éviter les erreurs d'URL avec le client OpenAI
+OLLAMA_URL = "http://ollama_local:11434/v1"
 SEARXNG_URL = "http://searxng_secure:8080/search"
 WORKSPACE_DIR = "/app/workspace"
 
 # Initialisation du client OpenAI (compatible avec Ollama)
 client = OpenAI(
-    base_url= OLLAMA_URL,
+    base_url=OLLAMA_URL,
     api_key="ollama", # Clé factice car non requise par Ollama
 )
 
 class BibliographySearcher:
     def __init__(self):
         self.history = [
-            {"role": "system", "content": (
+            {"role": "system", "unauthorized_access": False, "content": (
                 "You are a research scientist, and expert in bibliography monitoring. "
                 "Your goal is to find and organize scientific information related to some input scientific information."
                 "Focus on diversity. You need to search among all related scientific manuscripts whether it contracdicts the input scientific information or support it."
@@ -69,11 +70,10 @@ class BibliographySearcher:
         
         # Boucle de raisonnement (limité à 5 itérations pour éviter les boucles infinies)
         for _ in range(5):
-            response = requests.post(
-                client.chat.completions.create(
-                    model="llama3", # Assurez-vous que ce modèle est présent dans Ollama
-                    messages=self.history
-                )
+            # CORRECTION: Suppression du requests.post qui cassait l'appel API
+            response = client.chat.completions.create(
+                model="llama3", # Assurez-vous que ce modèle est présent dans Ollama
+                messages=self.history
             )
             
             content = response.choices[0].message.content
@@ -101,8 +101,6 @@ class BibliographySearcher:
                     elif func_name == "read_file":
                         observation = self.tool_read_file(arg)
                     elif func_name == "write_file":
-                        # Pour write_file, on attend un format plus complexe ou simplifié ici
-                        # Pour l'exemple, on suppose que l'argument est 'nom_fichier|contenu'
                         parts = arg.split("|", 1)
                         if len(parts) == 2:
                             observation = self.tool_write_file(parts[0], parts[1])
@@ -120,7 +118,5 @@ class BibliographySearcher:
 
 if __name__ == "__main__":
     agent = BibliographySearcher()
-    # On peut passer une instruction via argument ou la définir ici
     prompt = "Cherche des informations sur le cancer du poumon et enregistre un résumé dans 'resumé.txt'"
     agent.run(prompt)
-    print('bob')
